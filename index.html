@@ -1,30 +1,73 @@
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrical Material List</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }
+        .material-item { margin: 8px 0; display: flex; align-items: center; }
+        input[type="text"], input[type="number"] { margin-right: 10px; }
+        input[type="text"] { width: 100%; padding: 10px; margin-bottom: 10px; }
+        button { padding: 10px 20px; margin-top: 10px; }
+        @media (max-width: 600px) {
+            input[type="text"], button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Electrical Material List</h1>
+    <input type="text" id="search" placeholder="Search materials..."/>
+    <button onclick="filterMaterials()">Search</button>
+    <div id="materials"></div>
+    <button onclick="shareMaterials()">Share Selected</button>
 
-app.use(express.static(__dirname));
+    <script>
+        const displayMaterials = (materials) => {
+            const materialsDiv = document.getElementById('materials');
+            materialsDiv.innerHTML = '';
+            materials.forEach(material => {
+                const div = document.createElement('div');
+                div.className = 'material-item';
+                const sizes = material.size.join(', ');
+                div.innerHTML = `<input type="checkbox" value="${material.category}"> <span>${material.category} - ${sizes}</span> <input type="number" id="${material.category}" placeholder="Qty" min="1">`;
+                materialsDiv.appendChild(div);
+            });
+        };
 
-// Detailed materials list
-const materials = [
-  { category: 'THHN 10 STR Green (Copper)', size: ['1 ft', '500 ft', '1000 ft'] },
-  { category: 'THHN 10 STR Red (Copper)', size: ['1 ft', '500 ft', '1000 ft'] },
-  { category: 'THHN 10 STR Black (Copper)', size: ['1 ft', '500 ft', '1000 ft'] },
-  { category: 'THHN 8 STR Black', size: [''] },
-  { category: 'THHN 6 STR Black', size: ['1 ft'] }
-  // Add other materials as required
-];
+        const filterMaterials = () => {
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            fetch('/api/materials')
+                .then(response => response.json())
+                .then(data => {
+                    const filteredMaterials = data.filter(material =>
+                        material.category.toLowerCase().includes(searchTerm))
+                        .sort((a, b) => rankSimilarity(searchTerm, a.category) - rankSimilarity(searchTerm, b.category));
+                    displayMaterials(filteredMaterials);
+                });
+        };
 
-// API endpoint to fetch materials
-app.get('/api/materials', (req, res) => {
-  res.json(materials);
-});
+        const rankSimilarity = (searchTerm, category) => {
+            return Math.abs(category.length - searchTerm.length);
+        };
 
-// Serve index.html
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
+        const shareMaterials = () => {
+            const selectedMaterials = Array.from(
+                document.querySelectorAll('.material-item input[type="checkbox"]:checked'))
+                .map(input => {
+                    const qtyInput = document.getElementById(input.value);
+                    return `${input.value} (Qty: ${qtyInput.value || '1'})`;
+                });
+            if (selectedMaterials.length > 0) {
+                alert('Sharing these materials: ' + selectedMaterials.join(', '));
+            } else {
+                alert('No materials selected.');
+            }
+        };
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+        fetch('/api/materials')
+            .then(response => response.json())
+            .then(data => displayMaterials(data));
+    </script>
+</body>
+</html>
