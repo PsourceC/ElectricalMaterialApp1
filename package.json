@@ -1,7 +1,7 @@
 {
   "name": "ElectricalMaterialApp1",
   "version": "1.0.0",
-  "description": "Description of the app",
+  "description": "Application for managing electrical materials.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
