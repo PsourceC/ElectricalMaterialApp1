@@ -4,18 +4,18 @@ FROM node:18-alpine
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage Docker caching
+# Copy package.json and package-lock.json for proper versioning
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --production
+RUN npm install
 
-# Copy the rest of the application
+# Copy local directory contents to the container
 COPY . .
 
-# Expose the port the app runs on (Back4App default is 3000)
+# Expose the application on port 3000
 EXPOSE 3000
 
-# Command to start the app
-CMD ["npm", "start"]
+# Start the application
+CMD ["node", "index.js"]
 
